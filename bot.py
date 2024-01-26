@@ -1,18 +1,21 @@
 import os
 import telebot
 import requests
+from itertools import cycle
 
-with open("tg_token.txt") as f:
-    token = f.read().strip()
+bot = telebot.TeleBot("YOUR_API_TOKEN")
+session = requests.Session()
 
-bot = telebot.TeleBot(token)
+def get_free_proxies():
+    # Замените 'YOUR_PROXY_API_URL' на URL бесплатного API получения списка прокси
+    proxy_api_url = 'YOUR_PROXY_API_URL'
+    response = requests.get(proxy_api_url)
+    proxy_list = response.json()
+    # предполагаем, что ответ содержит список прокси в формате IP:PORT
+    return [{'http': f'http://{proxy}', 'https': f'http://{proxy}'} for proxy in proxy_list]
 
-# Настройка Tor Proxy
-session = requests.session()
-session.proxies = {
-    'http': 'socks5://159.203.137.249:64515',
-    'https': 'socks5://159.203.137.249:64515'
-}
+proxies = get_free_proxies()
+proxy_pool = cycle(proxies)
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -37,46 +40,57 @@ def get_search_tags(message, dataset_name, trigger_tag):
     if not os.path.exists(dataset_path):
         os.makedirs(dataset_path)
 
+    num_images_saved = download_images(dataset_path, search_tags, trigger_tag, 100)
+    
+    bot.send_message(message.chat.id, f"Датасет '{dataset_name}' собран. Найдено {num_images_saved} изображений.")
+
+def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
     num_images_saved = 0
     page_number = 1
-    dataset_limit = 100  # Максимальная длина датасета
+    current_proxy = next(proxy_pool)
 
     while num_images_saved < dataset_limit:
-        url = f"https://danbooru.donmai.us/posts.json?limit=100&page={page_number}&tags={'+'.join(search_tags)}"
-        response = session.get(url)
-        data = response.json()
+        try:
+            url = f"https://danbooru.donmai.us/posts.json?limit=100&page={page_number}&tags={'+'.join(search_tags)}"
+            response = session.get(url, proxies=current_proxy)
+            response.raise_for_status()
+            data = response.json()
 
-        if not data:
-            break  # Если нет изображений, закончим цикл
+            if not data:
+                break
 
-        for post in data:
-            if trigger_tag not in post["tag_string"]:
-                continue
+            for post in data:
+                if trigger_tag not in post["tag_string"]:
+                    continue
 
-            image_url = post.get("file_url")
-            if not image_url:
-                continue
+                image_url = post.get("file_url")
+                if not image_url:
+                    continue
 
-            image_response = session.get(image_url, stream=True)
-            if image_response.status_code == 200:
-                image_path = os.path.join(dataset_path, f"{num_images_saved}.png")
-                with open(image_path, 'wb') as f:
-                    for chunk in image_response.iter_content(1024):
-                        f.write(chunk)
+                image_response = session.get(image_url, stream=True, proxies=current_proxy)
+                if image_response.status_code == 200:
+                    image_path = os.path.join(dataset_path, f"{num_images_saved}.png")
+                    with open(image_path, 'wb') as f:
+                        for chunk in image_response.iter_content(1024):
+                            f.write(chunk)
 
-                tags = post["tag_string"].split()
-                tags_path = os.path.join(dataset_path, f"{num_images_saved}.txt")
-                with open(tags_path, "w") as f:
-                    f.write(f"{trigger_tag}, {', '.join(tags)}")
+                    tags = post["tag_string"].split()
+                    tags_path = os.path.join(dataset_path, f"{num_images_saved}.txt")
+                    with open(tags_path, "w") as f:
+                        f.write(f"{trigger_tag}, {', '.join(tags)}")
 
-                num_images_saved += 1
-                if num_images_saved >= dataset_limit:
-                    break
+                    num_images_saved += 1
+                    if num_images_saved >= dataset_limit:
+                        break
 
-        page_number += 1
-        if num_images_saved >= dataset_limit:
-            break
-            
-    bot.send_message(message.chat.id, f"Датасет '{dataset_name}' собран. Найдено {num_images_saved} изображений.")
+            page_number += 1
+            if num_images_saved >= dataset_limit:
+                break
+
+        except requests.exceptions.RequestException as e:
+            print(f'Error with proxy {current_proxy}, trying next one.')
+            current_proxy = next(proxy_pool)
+
+    return num_images_saved
 
 bot.infinity_polling()

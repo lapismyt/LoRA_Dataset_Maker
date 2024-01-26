@@ -38,6 +38,7 @@ def get_search_tags(message, dataset_name, trigger_tag):
 def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
     num_images_saved = 0
     page_number = 1
+    bot.send_message(message.chat.id, f"Работаю...")
 
     while num_images_saved < dataset_limit:
         try:

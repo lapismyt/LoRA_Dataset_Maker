@@ -64,7 +64,7 @@ def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
                 if image_response.status_code == 200:
                     image_path = os.path.join(dataset_path, f"{num_images_saved}.png")
                     with open(image_path, 'wb') as f:
-                        for chunk in image_response.iter_content(1024):
+                        for chunk in image_response.iter_content(16384):
                             f.write(chunk)
 
                     tags = post["tag_string"].split()

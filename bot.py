@@ -10,8 +10,8 @@ bot = telebot.TeleBot(token)
 # Настройка Tor Proxy
 session = requests.session()
 session.proxies = {
-    'http': 'socks5://127.0.0.1:9050',
-    'https': 'socks5://127.0.0.1:9050'
+    'http': 'socks5://159.203.137.249:64515',
+    'https': 'socks5://159.203.137.249:64515'
 }
 
 @bot.message_handler(commands=['start'])

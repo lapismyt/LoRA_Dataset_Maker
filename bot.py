@@ -10,7 +10,7 @@ bot = telebot.TeleBot(token)
 session = requests.Session()
 
 def get_free_proxies():
-    proxy_api_url = "https://www.proxy-list.download/api/v1/get?type=http&anon=transparent"
+    proxy_api_url = "https://www.proxy-list.download/api/v1/get?type=https&anon=transparent"
     response = requests.get(proxy_api_url)
     # предполагаем, что ответ содержит список прокси в формате IP:PORT
     proxy_list = response.content.decode().strip().replace("\r", "").split("\n")

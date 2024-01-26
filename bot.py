@@ -13,7 +13,7 @@ def get_free_proxies():
     proxy_api_url = "https://www.proxy-list.download/api/v1/get?type=http&anon=transparent"
     response = requests.get(proxy_api_url)
     # предполагаем, что ответ содержит список прокси в формате IP:PORT
-    proxy_list = response.content..decode().strip().split("\n")
+    proxy_list = response.content.decode().strip().split("\n")
     return [{'http': f'http://{proxy}', 'https': f'http://{proxy}'} for proxy in proxy_list]
 
 proxies = get_free_proxies()

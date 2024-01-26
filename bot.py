@@ -24,7 +24,7 @@ def get_trigger_tag(message, dataset_name):
     bot.register_next_step_handler(message, get_search_tags, dataset_name, trigger_tag)
 
 def get_search_tags(message, dataset_name, trigger_tag):
-    search_tags = message.text.split(",")
+    search_tags = message.text.strip().split(" ")
     search_tags = [tag.strip() for tag in search_tags]
 
     dataset_path = os.path.join("dataset", dataset_name)
@@ -42,6 +42,7 @@ def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
     while num_images_saved < dataset_limit:
         try:
             url = f"https://danbooru.donmai.us/posts.json?limit=100&page={page_number}&tags={'+'.join(search_tags)}"
+            print(f"Trying with url: {url}")
             response = session.get(url)
             response.raise_for_status()
             data = response.json()
@@ -50,10 +51,11 @@ def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
                 break
 
             for post in data:
-                if trigger_tag not in post["tag_string"]:
+                if " ".join(search_tags) not in post["tag_string"]:
                     continue
 
                 image_url = post.get("file_url")
+                print(f"Image URL: {image_url}")
                 if not image_url:
                     continue
 

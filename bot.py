@@ -14,7 +14,7 @@ def get_free_proxies():
     response = requests.get(proxy_api_url)
     # предполагаем, что ответ содержит список прокси в формате IP:PORT
     proxy_list = response.content.decode().strip().replace("\r", "").split("\n")
-    return [{'http': f'http://{proxy}', 'https': f'http://{proxy}'} for proxy in proxy_list]
+    return [{'http': f'http://{proxy}', 'https': f'https://{proxy}'} for proxy in proxy_list]
 
 proxies = get_free_proxies()
 proxy_pool = cycle(proxies)

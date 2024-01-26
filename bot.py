@@ -3,15 +3,17 @@ import telebot
 import requests
 from itertools import cycle
 
-bot = telebot.TeleBot("YOUR_API_TOKEN")
+with open("tg_token.txt") as f:
+    token = f.read().strip()
+
+bot = telebot.TeleBot(token)
 session = requests.Session()
 
 def get_free_proxies():
-    # Замените 'YOUR_PROXY_API_URL' на URL бесплатного API получения списка прокси
-    proxy_api_url = 'YOUR_PROXY_API_URL'
+    proxy_api_url = "https://www.proxy-list.download/api/v1/get?type=http&anon=transparent"
     response = requests.get(proxy_api_url)
-    proxy_list = response.json()
     # предполагаем, что ответ содержит список прокси в формате IP:PORT
+    proxy_list = response.content.strip().split("\n")
     return [{'http': f'http://{proxy}', 'https': f'http://{proxy}'} for proxy in proxy_list]
 
 proxies = get_free_proxies()
@@ -77,7 +79,7 @@ def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
                     tags = post["tag_string"].split()
                     tags_path = os.path.join(dataset_path, f"{num_images_saved}.txt")
                     with open(tags_path, "w") as f:
-                        f.write(f"{trigger_tag}, {', '.join(tags)}")
+                        f.write(f"{trigger_tag}, {', '.join(tags)}".replace("_", " "))
 
                     num_images_saved += 1
                     if num_images_saved >= dataset_limit:

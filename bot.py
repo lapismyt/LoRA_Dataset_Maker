@@ -1,23 +1,12 @@
 import os
 import telebot
 import requests
-from itertools import cycle
 
 with open("tg_token.txt") as f:
     token = f.read().strip()
 
 bot = telebot.TeleBot(token)
 session = requests.Session()
-
-def get_free_proxies():
-    proxy_api_url = "https://www.proxy-list.download/api/v1/get?type=https&anon=transparent"
-    response = requests.get(proxy_api_url)
-    # предполагаем, что ответ содержит список прокси в формате IP:PORT
-    proxy_list = response.content.decode().strip().replace("\r", "").split("\n")
-    return [{'http': f'http://{proxy}', 'https': f'https://{proxy}'} for proxy in proxy_list]
-
-proxies = get_free_proxies()
-proxy_pool = cycle(proxies)
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -54,7 +43,7 @@ def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
     while num_images_saved < dataset_limit:
         try:
             url = f"https://danbooru.donmai.us/posts.json?limit=100&page={page_number}&tags={'+'.join(search_tags)}"
-            response = session.get(url, proxies=current_proxy)
+            response = session.get(url)
             response.raise_for_status()
             data = response.json()
 
@@ -69,7 +58,7 @@ def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
                 if not image_url:
                     continue
 
-                image_response = session.get(image_url, stream=True, proxies=current_proxy)
+                image_response = session.get(image_url, stream=True)
                 if image_response.status_code == 200:
                     image_path = os.path.join(dataset_path, f"{num_images_saved}.png")
                     with open(image_path, 'wb') as f:
@@ -90,8 +79,7 @@ def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
                 break
 
         except requests.exceptions.RequestException as e:
-            print(f'Error with proxy {current_proxy}, trying next one.')
-            current_proxy = next(proxy_pool)
+            print(repr(e))
 
     return num_images_saved
 

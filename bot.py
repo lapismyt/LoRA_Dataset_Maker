@@ -31,11 +31,11 @@ def get_search_tags(message, dataset_name, trigger_tag):
     if not os.path.exists(dataset_path):
         os.makedirs(dataset_path)
 
-    num_images_saved = download_images(dataset_path, search_tags, trigger_tag, 100)
+    num_images_saved = download_images(message, dataset_path, search_tags, trigger_tag, 100)
     
     bot.send_message(message.chat.id, f"Датасет '{dataset_name}' собран. Найдено {num_images_saved} изображений.")
 
-def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
+def download_images(message, dataset_path, search_tags, trigger_tag, dataset_limit):
     num_images_saved = 0
     page_number = 1
     bot.send_message(message.chat.id, f"Работаю...")
@@ -58,6 +58,9 @@ def download_images(dataset_path, search_tags, trigger_tag, dataset_limit):
                 image_url = post.get("file_url")
                 print(f"Image URL: {image_url}")
                 if not image_url:
+                    continue
+
+                if not image_url.endswith(".png"):
                     continue
 
                 image_response = session.get(image_url, stream=True)

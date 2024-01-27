@@ -40,7 +40,7 @@ def process_image_limit_step(message, dataset_folder):
         chat_id = message.chat.id
         image_limit = int(message.text)
         
-        msg = bot.send_message(chat_id, 'Введите триггер::')
+        msg = bot.send_message(chat_id, 'Введите триггер:')
         bot.register_next_step_handler(msg, process_tags_step, dataset_folder, image_limit)
     except Exception as e:
         bot.reply_to(message, 'Ошибка ввода. Попробуйте ввести число ещё раз.')
@@ -98,7 +98,7 @@ def download_images(dataset_folder, tags, image_limit):
                     filename = os.path.join(dataset_folder, f'{num_images_saved}.png')
                     img.save(filename, 'PNG')
                 with open(os.path.join(dataset_folder, f"{num_images_saved}.txt"), "w") as f:
-                    f.write(f"{tags}, {post['tags']}")
+                    f.write(f"{tags}, {post['tags'].replace(' ', ', ').replace('_', ' ')}")
 
             except Exception as e:
                 print(f"Could not download image. Error: {e}")

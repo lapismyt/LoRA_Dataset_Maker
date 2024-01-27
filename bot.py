@@ -63,7 +63,7 @@ def download_images(dataset_folder, tags, image_limit):
     num_images_saved = 0
     page_number = 1
     while num_images_saved < image_limit:
-        url = f"https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&json=1&limit=100&tags={tags}&pid={page_number}"
+        url = f"https://api.rule34.xxx/index.php?page=dapi&s=post&q=index&json=1&limit=100&tags={tags}&pid={page_number}&deleted=show"
         print(f"Page URL: {url}")
         response = session.get(url)
         posts = response.json()
